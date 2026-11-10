@@ -30,3 +30,12 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Base de datos (Supabase)
+
+1. `supabase_migration.sql`: tablas base (ejecutar una vez).
+2. `supabase_migration_v2.sql`: **necesaria para las funciones nuevas**: PIN de padres en la nube,
+   aprobación de tareas, tareas que se repiten y premios. Ejecútala en *Supabase → SQL Editor*.
+   Se puede ejecutar varias veces sin problema.
+
+Sin la v2 la app sigue funcionando, pero esas funciones aparecen desactivadas con un aviso en Ajustes.

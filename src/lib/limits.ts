@@ -58,6 +58,70 @@ export function formatMinutes(minutes: number): string {
   return `${h}h ${m}min`
 }
 
+/** Fecha local YYYY-MM-DD (no UTC: en España toISOString daría "ayer" entre las 00:00 y las 02:00). */
+export function toDateString(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
 export function todayString(): string {
-  return new Date().toISOString().split('T')[0]
+  return toDateString(new Date())
+}
+
+/** Fecha local desplazada N días respecto a hoy (negativo = pasado). */
+export function daysAgoString(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return toDateString(d)
+}
+
+export interface ScreenBalance {
+  pool: number         // ganados hoy + traídos de ayer
+  usableToday: number  // lo que se puede usar hoy (respeta el límite diario)
+  available: number    // lo que queda por usar hoy
+  used: number
+  carried: number
+}
+
+/**
+ * Saldo de pantalla del día.
+ * El límite diario nunca se supera: aunque se acumulen minutos, como mucho se
+ * usan `dailyLimit` minutos al día. Lo que sobra se guarda para mañana (si el
+ * hijo tiene activado "Guardar minutos extra").
+ */
+export function calculateBalance(
+  earnedToday: number,
+  dailyLimit: number,
+  usedToday: number,
+  carriedOver: number
+): ScreenBalance {
+  const pool = earnedToday + carriedOver
+  const usableToday = Math.min(pool, dailyLimit)
+  const available = Math.max(0, usableToday - usedToday)
+  return { pool, usableToday, available, used: usedToday, carried: carriedOver }
+}
+
+/** Minutos que pasan al día siguiente (con tope = límite diario). */
+export function calculateCarryOver(
+  earned: number,
+  carried: number,
+  used: number,
+  dailyLimit: number,
+  accumulate: boolean
+): number {
+  if (!accumulate) return 0
+  return Math.min(dailyLimit, Math.max(0, earned + carried - used))
+}
+
+export const WEEKDAY_LABELS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'] // índice = getDay()
+export const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0] // lunes primero
+
+export function formatWeekdays(days: number[]): string {
+  const set = new Set(days)
+  if (set.size === 7) return 'Todos los días'
+  if (set.size === 5 && [1, 2, 3, 4, 5].every((d) => set.has(d))) return 'De lunes a viernes'
+  if (set.size === 2 && set.has(0) && set.has(6)) return 'Fines de semana'
+  return WEEKDAY_ORDER.filter((d) => set.has(d)).map((d) => WEEKDAY_LABELS[d]).join(' · ')
 }

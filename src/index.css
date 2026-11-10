@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ===== DESIGN TOKENS ===== */
@@ -19,6 +18,41 @@
   --border-radius: 20px;
   --border-radius-sm: 12px;
   --border-radius-lg: 28px;
+  --surface-tint: rgba(77, 168, 218, 0.08);
+  --overlay: rgba(0, 0, 0, 0.3);
+  color-scheme: light;
+}
+
+/* ===== MODO OSCURO ===== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-app: #23262d;
+    --primary: #5bb8ea;
+    --primary-dark: #4aa3d4;
+    --success-dark: #6fd4a2;
+    --text-main: #e8eaed;
+    --text-muted: #a0a8b3;
+    --text-light: #6f7782;
+    --shadow-light: rgba(255, 255, 255, 0.045);
+    --shadow-dark: rgba(0, 0, 0, 0.55);
+    --surface-tint: rgba(91, 184, 234, 0.1);
+    --overlay: rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg-app: #23262d;
+  --primary: #5bb8ea;
+  --primary-dark: #4aa3d4;
+  --success-dark: #6fd4a2;
+  --text-main: #e8eaed;
+  --text-muted: #a0a8b3;
+  --text-light: #6f7782;
+  --shadow-light: rgba(255, 255, 255, 0.045);
+  --shadow-dark: rgba(0, 0, 0, 0.55);
+  --surface-tint: rgba(91, 184, 234, 0.1);
+  --overlay: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
 }
 
 /* ===== BASE ===== */
@@ -35,6 +69,7 @@ html, body, #root {
 }
 
 body {
+  transition: background-color 0.3s ease, color 0.3s ease;
   font-family: 'Nunito', sans-serif;
   background-color: var(--bg-app);
   color: var(--text-main);
@@ -119,7 +154,7 @@ h1, h2, h3, h4, h5 {
   transform: translateY(1px);
   box-shadow: 
     inset 2px 2px 6px rgba(0,0,0,0.15),
-    inset -2px -2px 4px rgba(255,255,255,0.5);
+    inset -2px -2px 4px var(--shadow-light);
 }
 
 .btn-primary:disabled {
@@ -281,7 +316,7 @@ h1, h2, h3, h4, h5 {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.3);
+  background: var(--overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: flex-start;
@@ -400,7 +435,7 @@ h1, h2, h3, h4, h5 {
 .child-task-card.completed {
   box-shadow: 
     inset 3px 3px 7px rgba(102, 204, 153, 0.3),
-    inset -3px -3px 7px rgba(255,255,255,0.9);
+    inset -3px -3px 7px var(--shadow-light);
 }
 
 .checkbox-big {
@@ -424,7 +459,7 @@ h1, h2, h3, h4, h5 {
   background: linear-gradient(145deg, #77dba8, #55bb88);
   box-shadow: 
     3px 3px 6px rgba(85, 187, 136, 0.4),
-    -2px -2px 4px rgba(255,255,255,0.8);
+    -2px -2px 4px var(--shadow-light);
 }
 
 /* Avatar circle */
@@ -483,7 +518,7 @@ h1, h2, h3, h4, h5 {
   background: rgba(77, 168, 218, 0.1);
   box-shadow: 
     inset 2px 2px 5px rgba(77, 168, 218, 0.15),
-    inset -2px -2px 5px rgba(255,255,255,0.9);
+    inset -2px -2px 5px var(--shadow-light);
 }
 
 /* Confetti sparkle */
@@ -497,4 +532,144 @@ h1, h2, h3, h4, h5 {
   pointer-events: none;
   border-radius: 50%;
   animation: sparkle 0.6s ease-out forwards;
+}
+
+/* ===== RESPONSIVE / NAVEGACIÓN ===== */
+.only-mobile { display: none !important; }
+@media (max-width: 640px) {
+  .only-desktop { display: none !important; }
+  .only-mobile { display: flex !important; }
+  .has-bottom-nav { padding-bottom: calc(76px + env(safe-area-inset-bottom)) !important; }
+  .modal-box { padding: 1.5rem 1.25rem; }
+  .pin-digit { width: 52px; height: 60px; }
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  background: var(--bg-app);
+  box-shadow: 0 -4px 14px var(--shadow-dark);
+  justify-content: space-around;
+  padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom));
+}
+
+.bottom-nav .nav-tab {
+  flex: 1;
+  font-size: 0.72rem;
+  padding: 0.45rem 0.25rem;
+}
+
+.children-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+@media (max-width: 640px) {
+  .children-grid { gap: 1.25rem; }
+  .page-main { padding: 1.25rem 1rem 2rem !important; }
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+/* Chips de días de la semana */
+.weekday-chip {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-family: "Fredoka", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-app);
+  box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light);
+  transition: all 0.15s ease;
+}
+.weekday-chip.active {
+  color: white;
+  background: linear-gradient(145deg, #5bb8ea, #4099c8);
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Interruptor */
+.switch {
+  width: 52px;
+  height: 28px;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  background: rgba(163,177,198,0.5);
+  transition: background 0.3s;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.15);
+}
+.switch.on { background: linear-gradient(145deg, #77dba8, #55bb88); }
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+  transition: left 0.3s;
+}
+.switch.on::after { left: 27px; }
+
+/* Insignia de racha */
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 100px;
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #e8590c;
+  background: rgba(255, 146, 43, 0.15);
+}
+
+.tag-warning {
+  background: rgba(255, 179, 71, 0.18);
+  color: #d9822b;
+}
+
+.section-title {
+  font-family: "Fredoka", sans-serif;
+  font-size: 1.2rem;
+  color: var(--text-main);
+  margin-bottom: 0.75rem;
+  padding-left: 0.25rem;
+}
+
+/* Temporizador */
+@keyframes pulse-soft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 0.9s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

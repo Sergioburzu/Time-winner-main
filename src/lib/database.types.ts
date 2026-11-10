@@ -8,18 +8,24 @@ export interface Database {
           id: string
           name: string
           owner_id: string
+          parent_pin_hash: string | null
+          require_approval: boolean
           created_at: string
         }
         Insert: {
           id?: string
           name: string
           owner_id: string
+          parent_pin_hash?: string | null
+          require_approval?: boolean
           created_at?: string
         }
         Update: {
           id?: string
           name?: string
           owner_id?: string
+          parent_pin_hash?: string | null
+          require_approval?: boolean
           created_at?: string
         }
         Relationships: []
@@ -112,7 +118,7 @@ export interface Database {
           child_id: string
           task_id: string
           date: string
-          status: 'pending' | 'completed'
+          status: 'pending' | 'awaiting_approval' | 'completed'
           minutes_granted: number
           created_at: string
         }
@@ -121,7 +127,7 @@ export interface Database {
           child_id: string
           task_id: string
           date: string
-          status?: 'pending' | 'completed'
+          status?: 'pending' | 'awaiting_approval' | 'completed'
           minutes_granted: number
           created_at?: string
         }
@@ -130,7 +136,7 @@ export interface Database {
           child_id?: string
           task_id?: string
           date?: string
-          status?: 'pending' | 'completed'
+          status?: 'pending' | 'awaiting_approval' | 'completed'
           minutes_granted?: number
           created_at?: string
         }
@@ -185,6 +191,128 @@ export interface Database {
             columns: ["child_id"]
             isOneToOne: false
             referencedRelation: "children"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      recurring_tasks: {
+        Row: {
+          id: string
+          child_id: string
+          task_id: string
+          weekdays: number[]
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          child_id: string
+          task_id: string
+          weekdays?: number[]
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          child_id?: string
+          task_id?: string
+          weekdays?: number[]
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_tasks_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_tasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      rewards: {
+        Row: {
+          id: string
+          family_id: string
+          name: string
+          icon: string
+          cost_stars: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          name: string
+          icon?: string
+          cost_stars: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          family_id?: string
+          name?: string
+          icon?: string
+          cost_stars?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      reward_redemptions: {
+        Row: {
+          id: string
+          child_id: string
+          reward_id: string | null
+          reward_name: string
+          reward_icon: string
+          cost_stars: number
+          status: 'pending' | 'delivered'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          child_id: string
+          reward_id?: string | null
+          reward_name: string
+          reward_icon?: string
+          cost_stars: number
+          status?: 'pending' | 'delivered'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          child_id?: string
+          reward_id?: string | null
+          reward_name?: string
+          reward_icon?: string
+          cost_stars?: number
+          status?: 'pending' | 'delivered'
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
             referencedColumns: ["id"]
           }
         ]

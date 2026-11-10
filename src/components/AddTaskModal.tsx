@@ -3,14 +3,18 @@ import { X } from 'lucide-react'
 import type { Child } from '../store/childrenStore'
 import type { Task } from '../store/tasksStore'
 import { DEFAULT_TASK_ICONS, DEFAULT_TASKS } from '../store/tasksStore'
+import WeekdayPicker from './WeekdayPicker'
+import { formatWeekdays } from '../lib/limits'
 
 interface AddTaskModalProps {
   child: Child
   existingTasks: Task[]                   // family task catalog
   assignedTaskIds: string[]               // already assigned today
   onClose: () => void
-  onAssignExisting: (task: Task) => void
-  onCreateAndAssign: (taskData: Omit<Task, 'id' | 'family_id' | 'created_at'>) => Promise<void>
+  onAssignExisting: (task: Task, weekdays: number[]) => Promise<void> | void
+  onCreateAndAssign: (taskData: Omit<Task, 'id' | 'family_id' | 'created_at'>, weekdays: number[]) => Promise<void>
+  /** false si aún no existe la tabla de tareas recurrentes */
+  recurringAvailable?: boolean
 }
 
 type Tab = 'catalog' | 'new'
@@ -22,6 +26,7 @@ export default function AddTaskModal({
   onClose,
   onAssignExisting,
   onCreateAndAssign,
+  recurringAvailable = true,
 }: AddTaskModalProps) {
   const [tab, setTab] = useState<Tab>('catalog')
   const [search, setSearch] = useState('')
@@ -32,6 +37,9 @@ export default function AddTaskModal({
   const [newName, setNewName] = useState('')
   const [newIcon, setNewIcon] = useState('⭐')
   const [newMinutes, setNewMinutes] = useState(10)
+
+  // Repetición (vacío = solo hoy)
+  const [weekdays, setWeekdays] = useState<number[]>([])
 
   const availableTasks = existingTasks.filter((t) => {
     const notAssigned = !assignedTaskIds.includes(t.id)
@@ -44,9 +52,17 @@ export default function AddTaskModal({
     (dt) => !existingTasks.some((et) => et.name === dt.name) && !search
   ).slice(0, 6)
 
-  const handleAssign = (task: Task) => {
-    onAssignExisting(task)
-    onClose()
+  const handleAssign = async (task: Task) => {
+    setLoading(true)
+    setError('')
+    try {
+      await onAssignExisting(task, weekdays)
+      onClose()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al asignar la tarea')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCreateAndAssign = async (e: React.FormEvent) => {
@@ -61,7 +77,7 @@ export default function AddTaskModal({
         name: newName.trim(),
         icon: newIcon,
         reward_minutes: newMinutes,
-      })
+      }, weekdays)
       onClose()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al crear la tarea')
@@ -96,6 +112,18 @@ export default function AddTaskModal({
             </button>
           ))}
         </div>
+
+        {/* Repetición */}
+        {recurringAvailable && (
+          <div className="neumorphic-inset" style={{ padding: '0.85rem', marginBottom: '1rem' }}>
+            <p style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+              🔁 Repetir: <span style={{ color: 'var(--primary)' }}>{weekdays.length ? formatWeekdays(weekdays) : 'Solo hoy'}</span>
+            </p>
+            <WeekdayPicker value={weekdays} onChange={setWeekdays} />
+          </div>
+        )}
+
+        {error && tab === 'catalog' && <p style={{ color: 'var(--danger)', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.75rem' }}>⚠️ {error}</p>}
 
         {/* Tab: Catalog */}
         {tab === 'catalog' && (
@@ -160,6 +188,7 @@ export default function AddTaskModal({
                   <button
                     key={task.id}
                     onClick={() => handleAssign(task)}
+                    disabled={loading}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

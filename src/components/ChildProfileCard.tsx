@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Settings, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Settings, Trash2, ChevronDown, ChevronUp, Check } from 'lucide-react'
 import type { Child } from '../store/childrenStore'
 import type { AssignedTask } from '../store/todayStore'
 import ProgressRing from './ProgressRing'
@@ -13,6 +13,9 @@ interface ChildProfileCardProps {
   onEditChild: (child: Child) => void
   onDeleteChild: (child: Child) => void
   onRemoveTask: (assignedTaskId: string) => void
+  onApproveTask?: (assignedTaskId: string) => void
+  recurringTaskIds?: string[]
+  availableMinutes?: number | null
 }
 
 export default function ChildProfileCard({
@@ -22,6 +25,9 @@ export default function ChildProfileCard({
   onEditChild,
   onDeleteChild,
   onRemoveTask,
+  onApproveTask,
+  recurringTaskIds = [],
+  availableMinutes = null,
 }: ChildProfileCardProps) {
   const navigate = useNavigate()
   const [tasksExpanded, setTasksExpanded] = useState(true)
@@ -86,6 +92,7 @@ export default function ChildProfileCard({
             </div>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
               {formatMinutes(earnedMinutes)} ganados de {formatMinutes(child.daily_limit_minutes)}
+              {availableMinutes !== null && <> · <strong style={{ color: 'var(--primary)' }}>{formatMinutes(availableMinutes)} disponibles</strong></>}
             </p>
           </div>
         </div>
@@ -149,7 +156,7 @@ export default function ChildProfileCard({
                   borderRadius: 'var(--border-radius-sm)',
                   background: task.status === 'completed' ? 'rgba(102,204,153,0.08)' : 'var(--bg-app)',
                   boxShadow: task.status === 'completed'
-                    ? 'inset 2px 2px 5px rgba(102,204,153,0.2), inset -2px -2px 5px rgba(255,255,255,0.9)'
+                    ? 'inset 2px 2px 5px rgba(102,204,153,0.2), inset -2px -2px 5px var(--shadow-light)'
                     : '3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light)',
                 }}
               >
@@ -163,11 +170,26 @@ export default function ChildProfileCard({
                   opacity: task.status === 'completed' ? 0.7 : 1,
                 }}>
                   {task.task?.name}
+                  {recurringTaskIds.includes(task.task_id) && (
+                    <span title="Se repite automáticamente" style={{ marginLeft: 6, fontSize: '0.8rem', opacity: 0.7 }}>🔁</span>
+                  )}
                 </span>
                 <span style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 700 }}>
                   +{task.minutes_granted}min
                 </span>
                 {task.status === 'completed' && <span className="tag tag-success">✓</span>}
+                {task.status === 'awaiting_approval' && (
+                  onApproveTask ? (
+                    <button
+                      onClick={() => onApproveTask(task.id)}
+                      className="tag tag-warning"
+                      style={{ border: 'none', cursor: 'pointer' }}
+                      title="Aprobar tarea"
+                    >
+                      <Check size={12} /> Aprobar
+                    </button>
+                  ) : <span className="tag tag-warning">⏳</span>
+                )}
                 <button
                   onClick={() => onRemoveTask(task.id)}
                   style={{

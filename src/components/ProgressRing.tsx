@@ -86,7 +86,7 @@ export default function ProgressRing({
           <span
             style={{
               fontSize: size * 0.1,
-              color: '#888',
+              color: 'var(--text-muted)',
               fontFamily: 'Nunito, sans-serif',
               fontWeight: 600,
               marginTop: 2,

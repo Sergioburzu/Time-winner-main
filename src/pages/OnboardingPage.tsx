@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useChildrenStore } from '../store/childrenStore'
@@ -8,7 +8,7 @@ type Step = 'welcome' | 'account' | 'family' | 'firstChild' | 'done'
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
-  const { signUp, signIn, isLoading, error: authError } = useAuthStore()
+  const { signUp, signIn, isLoading, error: authError, user, family } = useAuthStore()
   const { addChild } = useChildrenStore()
   const { addTask } = useTasksStore()
 
@@ -27,6 +27,12 @@ export default function OnboardingPage() {
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState(7)
   const [childAvatar, setChildAvatar] = useState('🦁')
+
+  // Si ya hay sesión, ir al panel. Solo desde la pantalla de bienvenida: durante el
+  // registro se sigue al paso "Añade tu primer hijo" aunque ya exista la familia.
+  useEffect(() => {
+    if (user && family && step === 'welcome') navigate('/parent', { replace: true })
+  }, [user, family, step, navigate])
 
   const AVATARS = ['🦁', '🐯', '🐻', '🐼', '🦊', '🐸', '🦄', '🐬', '🦋', '🌟', '🚀', '⚡']
 

@@ -20,7 +20,7 @@ function ProtectedParentRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { user, family, loadSession, isInitializing } = useAuthStore()
+  const { user, loadSession, isInitializing } = useAuthStore()
 
   useEffect(() => {
     loadSession()
@@ -51,12 +51,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public: onboarding / auth */}
-      <Route
-        path="/"
-        element={
-          user && family ? <Navigate to="/parent" replace /> : <OnboardingPage />
-        }
-      />
+      <Route path="/" element={<OnboardingPage />} />
 
       {/* Protected parent routes */}
       <Route

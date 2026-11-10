@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useChildrenStore } from '../store/childrenStore'
 import { useAuthStore } from '../store/authStore'
-import { formatMinutes } from '../lib/limits'
+import { formatMinutes, daysAgoString } from '../lib/limits'
+import { useFamilyData } from '../hooks/useFamilyData'
+import { fetchStreak } from '../lib/streak'
+import ParentNav from '../components/ParentNav'
 import { ArrowLeft, Calendar, BarChart2 } from 'lucide-react'
 import {
   BarChart,
@@ -23,7 +26,9 @@ interface DayRecord {
 
 export default function HistoryPage() {
   const navigate = useNavigate()
+  useFamilyData()
   const { children } = useChildrenStore()
+  const [streak, setStreak] = useState(0)
   const { isParentUnlocked } = useAuthStore()
   const [selectedChildId, setSelectedChildId] = useState<string>(children[0]?.id ?? '')
   const [period, setPeriod] = useState<'week' | 'month'>('week')
@@ -39,14 +44,14 @@ export default function HistoryPage() {
   useEffect(() => {
     if (!selectedChildId) return
     loadHistory()
+    void fetchStreak(selectedChildId).then(setStreak)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChildId, period])
 
   const loadHistory = async () => {
     setIsLoading(true)
     const days = period === 'week' ? 7 : 30
-    const fromDate = new Date()
-    fromDate.setDate(fromDate.getDate() - days + 1)
-    const fromStr = fromDate.toISOString().split('T')[0]
+    const fromStr = daysAgoString(days - 1)
 
     const { data, error } = await supabase
       .from('assigned_tasks')
@@ -106,10 +111,10 @@ export default function HistoryPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-app)', fontFamily: 'Nunito, sans-serif' }}>
+    <div className="has-bottom-nav" style={{ minHeight: '100vh', background: 'var(--bg-app)', fontFamily: 'Nunito, sans-serif' }}>
       {/* Header */}
       <header style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid rgba(163,177,198,0.3)' }}>
-        <button onClick={() => navigate('/parent')} className="btn-ghost" style={{ padding: '0.5rem' }}>
+        <button onClick={() => navigate('/parent')} className="btn-ghost only-desktop" style={{ padding: '0.5rem' }} aria-label="Volver al panel">
           <ArrowLeft size={22} />
         </button>
         <h1 style={{ fontFamily: 'Fredoka, sans-serif', fontSize: '1.4rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -117,7 +122,7 @@ export default function HistoryPage() {
         </h1>
       </header>
 
-      <main style={{ padding: '1.5rem', maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <main className="page-main" style={{ padding: '1.5rem', maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Filters */}
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Child selector */}
@@ -149,11 +154,12 @@ export default function HistoryPage() {
         </div>
 
         {/* Summary stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
           {[
             { label: 'Total ganado', value: formatMinutes(totalMinutes), icon: '⏱' },
             { label: 'Promedio diario', value: formatMinutes(avgMinutes), icon: '📊' },
             { label: 'Días activos', value: `${records.length}`, icon: '📅' },
+            { label: 'Racha actual', value: `${streak} ${streak === 1 ? 'día' : 'días'}`, icon: '🔥' },
           ].map((stat) => (
             <div key={stat.label} className="neumorphic" style={{ padding: '1rem', textAlign: 'center' }}>
               <div style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>{stat.icon}</div>
@@ -174,15 +180,16 @@ export default function HistoryPage() {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(163,177,198,0.3)" />
-                <XAxis dataKey="day" tick={{ fontSize: 11, fontFamily: 'Nunito', fill: '#888' }} />
-                <YAxis tick={{ fontSize: 11, fontFamily: 'Nunito', fill: '#888' }} />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fontFamily: 'Nunito', fill: 'var(--text-muted)' }} />
+                <YAxis tick={{ fontSize: 11, fontFamily: 'Nunito', fill: 'var(--text-muted)' }} />
                 <Tooltip
                   contentStyle={{
                     fontFamily: 'Nunito',
                     borderRadius: 12,
                     border: 'none',
-                    boxShadow: '4px 4px 12px rgba(163,177,198,0.5)',
+                    boxShadow: '4px 4px 12px var(--shadow-dark)',
                     background: 'var(--bg-app)',
+                    color: 'var(--text-main)',
                   }}
                   formatter={(v: any) => [`${v} min`, 'Minutos ganados']}
                 />
@@ -239,11 +246,11 @@ export default function HistoryPage() {
                           borderRadius: 100,
                           fontSize: '0.8rem',
                           fontWeight: 600,
-                          background: task.status === 'completed' ? 'rgba(102,204,153,0.15)' : 'rgba(163,177,198,0.15)',
-                          color: task.status === 'completed' ? 'var(--success-dark)' : 'var(--text-muted)',
+                          background: task.status === 'completed' ? 'rgba(102,204,153,0.15)' : task.status === 'awaiting_approval' ? 'rgba(255,179,71,0.18)' : 'rgba(163,177,198,0.15)',
+                          color: task.status === 'completed' ? 'var(--success-dark)' : task.status === 'awaiting_approval' ? '#d9822b' : 'var(--text-muted)',
                         }}
                       >
-                        {task.icon} {task.name} {task.status === 'completed' && `+${task.minutes_granted}min`}
+                        {task.icon} {task.name} {task.status === 'completed' && `+${task.minutes_granted}min`}{task.status === 'awaiting_approval' && ' ⏳'}
                       </span>
                     ))}
                   </div>
@@ -253,6 +260,8 @@ export default function HistoryPage() {
           </div>
         )}
       </main>
+
+      <ParentNav active="history" />
     </div>
   )
 }

@@ -19,8 +19,9 @@ export default function PinLock({ onUnlocked }: PinLockProps) {
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
   ]
-  const { unlockParent, parentPin, setParentPin } = useAuthStore()
-  const isCreateMode = !parentPin
+  const { unlockParent, setParentPin } = useAuthStore()
+  const isCreateMode = useAuthStore((s) => !s.family?.parent_pin_hash && !s.parentPin)
+  const [checking, setChecking] = useState(false)
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return
@@ -36,9 +37,9 @@ export default function PinLock({ onUnlocked }: PinLockProps) {
     // Auto-check when all filled
     if (index === 3 && value) {
       const pin = [...newDigits.slice(0, 3), value].join('')
-      checkPin(pin)
+      void checkPin(pin)
     } else if (newDigits.every((d) => d !== '')) {
-      checkPin(newDigits.join(''))
+      void checkPin(newDigits.join(''))
     }
   }
 
@@ -48,7 +49,8 @@ export default function PinLock({ onUnlocked }: PinLockProps) {
     }
   }
 
-  const checkPin = (pin: string) => {
+  const checkPin = async (pin: string) => {
+    if (checking) return
     if (isCreateMode) {
       // Create PIN flow
       if (createStep === 'enter') {
@@ -59,8 +61,10 @@ export default function PinLock({ onUnlocked }: PinLockProps) {
       } else {
         // Confirm step
         if (pin === firstPin) {
-          setParentPin(pin)
-          unlockParent(pin)
+          setChecking(true)
+          await setParentPin(pin)
+          await unlockParent(pin)
+          setChecking(false)
           onUnlocked()
         } else {
           setError(true)
@@ -73,7 +77,10 @@ export default function PinLock({ onUnlocked }: PinLockProps) {
       }
     } else {
       // Normal unlock flow
-      if (unlockParent(pin)) {
+      setChecking(true)
+      const ok = await unlockParent(pin)
+      setChecking(false)
+      if (ok) {
         onUnlocked()
       } else {
         setError(true)
@@ -118,7 +125,7 @@ export default function PinLock({ onUnlocked }: PinLockProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 4px 10px rgba(77,168,218,0.4), -4px -4px 10px rgba(255,255,255,0.8)',
+            boxShadow: '4px 4px 10px rgba(77,168,218,0.4), -4px -4px 10px var(--shadow-light)',
           }}
         >
           <Lock size={32} color="white" />
@@ -153,7 +160,7 @@ export default function PinLock({ onUnlocked }: PinLockProps) {
               autoFocus={i === 0}
               style={{
                 boxShadow: error
-                  ? 'inset 4px 4px 8px rgba(255,107,107,0.25), inset -4px -4px 8px rgba(255,255,255,0.8), 0 0 0 2px rgba(255,107,107,0.4)'
+                  ? 'inset 4px 4px 8px rgba(255,107,107,0.25), inset -4px -4px 8px var(--shadow-light), 0 0 0 2px rgba(255,107,107,0.4)'
                   : undefined,
               }}
               aria-label={`Dígito ${i + 1} del PIN`}
