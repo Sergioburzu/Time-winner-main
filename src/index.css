@@ -673,3 +673,24 @@ h1, h2, h3, h4, h5 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ===== PÁGINAS LEGALES ===== */
+.legal-content h2 {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  margin: 1.5rem 0 0.5rem;
+}
+.legal-content p,
+.legal-content li {
+  color: var(--text-main);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+.legal-content p + p { margin-top: 0.6rem; }
+.legal-content ul { padding-left: 1.25rem; margin: 0.4rem 0 0.6rem; }
+.legal-content li { margin-bottom: 0.3rem; }
+.legal-content a { color: var(--primary); font-weight: 700; }
+.legal-muted { color: var(--text-muted) !important; font-size: 0.85rem !important; }
+
+/* Zona segura en móviles con notch / Android edge-to-edge (app nativa) */
+body { padding-top: env(safe-area-inset-top); }

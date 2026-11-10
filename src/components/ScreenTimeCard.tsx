@@ -4,6 +4,7 @@ import type { Child } from '../store/childrenStore'
 import { useMinutesStore } from '../store/minutesStore'
 import { calculateBalance, formatMinutes } from '../lib/limits'
 import { playTimeUp, vibrate } from '../lib/celebrate'
+import { scheduleTimerEnd, cancelTimerEnd } from '../lib/native'
 
 interface ActiveTimer {
   endsAt: number
@@ -83,6 +84,8 @@ export default function ScreenTimeCard({ child, earned }: { child: Child; earned
       const t = { endsAt: Date.now() + minutes * 60_000, minutes }
       writeTimer(child.id, t)
       setTimer(t)
+      // En la app de móvil: aviso aunque el niño salga de la app
+      void scheduleTimerEnd(child.id, child.name, t.endsAt)
       setNow(Date.now())
       setChoosing(false)
       setFinished(false)
@@ -97,6 +100,7 @@ export default function ScreenTimeCard({ child, earned }: { child: Child; earned
     setBusy(true)
     try {
       if (remaining > 0) await addUsed(child.id, -remaining)
+      void cancelTimerEnd(child.id)
       writeTimer(child.id, null)
       setTimer(null)
     } finally {

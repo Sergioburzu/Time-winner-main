@@ -25,6 +25,8 @@ interface AuthState {
   signUp: (email: string, password: string, familyName: string, pin: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  /** Borra la cuenta y todos sus datos. Pide la contraseña para confirmar. */
+  deleteAccount: (password: string) => Promise<void>
   unlockParent: (pin: string) => Promise<boolean>
   lockParent: () => void
   loadSession: () => Promise<void>
@@ -145,6 +147,32 @@ export const useAuthStore = create<AuthState>()(
         signOut: async () => {
           await supabase.auth.signOut()
           set({ user: null, family: null, isParentUnlocked: false })
+        },
+
+        deleteAccount: async (password) => {
+          const email = get().user?.email
+          if (!email) throw new Error('No hay sesión iniciada')
+
+          // Confirmar identidad con la contraseña antes de borrar nada
+          const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+          if (authError) throw new Error('Contraseña incorrecta')
+
+          const { error } = await supabase.rpc('delete_my_account')
+          if (error) {
+            if (error.message.includes('delete_my_account')) {
+              throw new Error('Falta ejecutar supabase_migration_v3.sql en Supabase')
+            }
+            throw error
+          }
+
+          // El usuario ya no existe en el servidor: cerrar sesión solo en local
+          await supabase.auth.signOut({ scope: 'local' })
+          try {
+            Object.keys(localStorage)
+              .filter((k) => k.startsWith('tw-timer-'))
+              .forEach((k) => localStorage.removeItem(k))
+          } catch { /* ignorar */ }
+          set({ user: null, family: null, isParentUnlocked: false, parentPin: null })
         },
 
         unlockParent: async (pin) => {

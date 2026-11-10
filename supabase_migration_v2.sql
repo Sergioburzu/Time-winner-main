@@ -90,6 +90,9 @@ CREATE INDEX IF NOT EXISTS idx_rewards_family ON public.rewards(family_id);
 CREATE INDEX IF NOT EXISTS idx_redemptions_child ON public.reward_redemptions(child_id);
 CREATE INDEX IF NOT EXISTS idx_assigned_tasks_child_status ON public.assigned_tasks(child_id, status);
 
+-- Recargar la caché de la API para que la app vea las tablas nuevas al momento
+NOTIFY pgrst, 'reload schema';
+
 -- ============================================================
 -- OPCIONAL: evitar familias duplicadas por usuario.
 -- Primero comprueba que no hay duplicados:

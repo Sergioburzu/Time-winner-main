@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useChildrenStore } from '../store/childrenStore'
 import { useTasksStore, DEFAULT_TASK_ICONS } from '../store/tasksStore'
 import { useAuthStore } from '../store/authStore'
@@ -13,6 +13,8 @@ import { isSoundEnabled, setSoundEnabled } from '../lib/celebrate'
 import { isValidPin } from '../lib/pin'
 import ParentNav from '../components/ParentNav'
 import WeekdayPicker from '../components/WeekdayPicker'
+import DeleteAccountForm from '../components/DeleteAccountForm'
+import { PRIVACY_PATH } from '../lib/legal'
 import { ArrowLeft, Settings as SettingsIcon, Trash2, Edit2, Check, Sun, Moon, Monitor } from 'lucide-react'
 
 const REWARD_ICONS = ['🎁', '🍕', '🍦', '🎬', '🎮', '🧸', '📖', '🏞️', '🍿', '🛝', '🎨', '⚽', '🍫', '🛌', '🎡', '👑']
@@ -73,6 +75,9 @@ export default function SettingsPage() {
   const [rewardIcon, setRewardIcon] = useState('🎁')
   const [rewardCost, setRewardCost] = useState(60)
   const [rewardError, setRewardError] = useState('')
+
+  // Eliminar cuenta
+  const [showDelete, setShowDelete] = useState(false)
 
   const childIdsKey = children.map((c) => c.id).join(',')
   useEffect(() => {
@@ -589,11 +594,25 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Sign out */}
-        <section style={{ paddingTop: '1rem', borderTop: '1px solid rgba(163,177,198,0.3)', display: 'flex', justifyContent: 'center' }}>
+        {/* Cuenta */}
+        <section style={{ paddingTop: '1rem', borderTop: '1px solid rgba(163,177,198,0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
           <button onClick={() => { signOut(); navigate('/') }} className="btn-ghost" style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             🚪 Cerrar sesión
           </button>
+          <Link to={PRIVACY_PATH} style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Política de privacidad</Link>
+          {!showDelete ? (
+            <button onClick={() => setShowDelete(true)} className="btn-ghost" style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
+              Eliminar cuenta
+            </button>
+          ) : (
+            <div className="neumorphic animate-slide-up" style={{ padding: '1.25rem', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <h3 style={{ fontFamily: 'Fredoka, sans-serif', fontSize: '1.1rem', color: 'var(--danger)' }}>🗑️ Eliminar cuenta</h3>
+                <button onClick={() => setShowDelete(false)} className="btn-ghost" style={{ padding: '0.3rem 0.6rem' }} aria-label="Cancelar">✕</button>
+              </div>
+              <DeleteAccountForm onDeleted={() => navigate('/', { replace: true })} />
+            </div>
+          )}
         </section>
       </main>
 

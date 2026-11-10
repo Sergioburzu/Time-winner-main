@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { PRIVACY_PATH } from '../lib/legal'
 import { useAuthStore } from '../store/authStore'
 import { useChildrenStore } from '../store/childrenStore'
 import { useTasksStore, DEFAULT_TASKS } from '../store/tasksStore'
@@ -133,6 +134,9 @@ export default function OnboardingPage() {
               Ya tengo cuenta — Iniciar sesión
             </button>
           </div>
+          <p style={{ marginTop: '1.5rem', fontSize: '0.8rem' }}>
+            <Link to={PRIVACY_PATH} style={{ color: 'var(--text-muted)' }}>Política de privacidad</Link>
+          </p>
         </div>
       )}
 
@@ -231,6 +235,13 @@ export default function OnboardingPage() {
             {displayError && (
               <p style={{ color: 'var(--danger)', fontWeight: 700, fontSize: '0.9rem', textAlign: 'center', padding: '0.5rem', background: 'rgba(255,107,107,0.1)', borderRadius: 8 }}>
                 ⚠️ {displayError}
+              </p>
+            )}
+
+            {mode === 'signup' && (
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.5 }}>
+                Al crear la cuenta confirmas que eres mayor de edad (padre, madre o tutor) y aceptas la{' '}
+                <Link to={PRIVACY_PATH} target="_blank" style={{ color: 'var(--primary)', fontWeight: 700 }}>política de privacidad</Link>.
               </p>
             )}
 

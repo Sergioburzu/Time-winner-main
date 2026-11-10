@@ -7,6 +7,10 @@ import ChildView from './pages/ChildView'
 import HistoryPage from './pages/HistoryPage'
 import SettingsPage from './pages/SettingsPage'
 import PinLock from './components/PinLock'
+import PrivacyPage from './pages/PrivacyPage'
+import DeleteAccountPage from './pages/DeleteAccountPage'
+import { PRIVACY_PATH, DELETE_ACCOUNT_PATH } from './lib/legal'
+import { useNativeBackButton } from './lib/native'
 
 function ProtectedParentRoute({ children }: { children: React.ReactNode }) {
   const { isParentUnlocked } = useAuthStore()
@@ -21,6 +25,7 @@ function ProtectedParentRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   const { user, loadSession, isInitializing } = useAuthStore()
+  useNativeBackButton()
 
   useEffect(() => {
     loadSession()
@@ -52,6 +57,10 @@ function AppRoutes() {
     <Routes>
       {/* Public: onboarding / auth */}
       <Route path="/" element={<OnboardingPage />} />
+
+      {/* Páginas públicas (requisito de Google Play) */}
+      <Route path={PRIVACY_PATH} element={<PrivacyPage />} />
+      <Route path={DELETE_ACCOUNT_PATH} element={<DeleteAccountPage />} />
 
       {/* Protected parent routes */}
       <Route
